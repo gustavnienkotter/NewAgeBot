@@ -1,0 +1,47 @@
+plugins {
+    id 'org.springframework.boot' version '2.6.4'
+    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+}
+
+apply plugin: 'java'
+apply plugin: 'idea'
+apply plugin: 'application'
+
+mainClassName = 'com.newagebot.NewAgeBotApplication'
+group = 'com.newagebot'
+version = '0.0.1-SNAPSHOT'
+
+sourceCompatibility = '17'
+targetCompatibility = '17'
+
+tasks.withType(JavaCompile) {
+    options.deprecation = true
+    options.compilerArgs.addAll(['-Xlint'])
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        url 'https://m2.dv8tion.net/releases'
+    }
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    compileOnly 'org.projectlombok:lombok:1.18.22'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools:2.6.4'
+    annotationProcessor 'org.projectlombok:lombok:1.18.22'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test:2.6.4'
+    implementation 'com.discord4j:discord4j-core:3.2.4'
+    testImplementation 'ch.qos.logback:logback-classic:1.2.10'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
