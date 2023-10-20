@@ -26,7 +26,6 @@ public class PrivateMessageListener {
     public PrivateMessageListener(GatewayDiscordClient client) {
         this.client = client;
         client.on(MessageCreateEvent.class, this::handle).subscribe();
-
     }
 
     private Mono<Object> handle(MessageCreateEvent event) {
@@ -36,14 +35,14 @@ public class PrivateMessageListener {
         if (event.getGuildId().isEmpty()) {
             return client.getGuildById(Snowflake.of(1121476730851446804L))
                     .flatMap(this::getSupportChannel)
-                    .flatMap(channel -> createMessage(channel, "<@"+event.getMessage().getData().author().id()+"> : " + event.getMessage().getContent(), event.getMessage().getAttachments())
+                    .flatMap(channel -> createMessage(channel, "<@" + event.getMessage().getData().author().id() + "> : " + event.getMessage().getContent(), event.getMessage().getAttachments())
                             .then(event.getMessage().addReaction(ReactionEmoji.unicode("✅"))));
-        } else if (event.getGuildId().isPresent() && !event.getMessage().getMemberMentions().isEmpty()) {
+        } else if (event.getGuildId().isPresent() && event.getMessage().getContent().startsWith("<@")) {
             List<String> message = Arrays.stream(event.getMessage().getContent().split("^(<@)+([0-9])+(>)")).toList();
             return client.getUserById(event.getMessage().getMemberMentions().get(0).getId())
                     .flatMap(User::getPrivateChannel)
                     .flatMap(channel -> createMessage(channel, message.get(1).trim(), event.getMessage().getAttachments()).then(event.getMessage().addReaction(ReactionEmoji.unicode("✅"))));
-        } else if (event.getGuildId().isPresent() && !event.getMessage().getData().referencedMessage().isAbsent() && isSelfId(event)) {
+        } else if (event.getGuildId().isPresent() && !event.getMessage().getData().referencedMessage().isAbsent()) {
             MessageData messageData = event.getMessage().getData().referencedMessage().get().get();
             List<String> message = Arrays.stream(messageData.content().split(">")).toList();
             return client.getUserById(Snowflake.of(message.get(0).replace("<@", "")))
