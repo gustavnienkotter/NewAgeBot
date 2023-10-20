@@ -6,6 +6,7 @@ import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.Attachment;
 import discord4j.core.object.entity.Guild;
 import discord4j.core.object.entity.User;
+import discord4j.core.object.entity.channel.Channel;
 import discord4j.core.object.entity.channel.MessageChannel;
 import discord4j.core.object.reaction.ReactionEmoji;
 import discord4j.core.spec.MessageCreateMono;
@@ -37,19 +38,25 @@ public class PrivateMessageListener {
                     .flatMap(this::getSupportChannel)
                     .flatMap(channel -> createMessage(channel, "<@" + event.getMessage().getData().author().id() + "> : " + event.getMessage().getContent(), event.getMessage().getAttachments())
                             .then(event.getMessage().addReaction(ReactionEmoji.unicode("✅"))));
-        } else if (event.getGuildId().isPresent() && event.getMessage().getContent().startsWith("<@")) {
-            List<String> message = Arrays.stream(event.getMessage().getContent().split("^(<@)+([0-9])+(>)")).toList();
-            return client.getUserById(event.getMessage().getMemberMentions().get(0).getId())
-                    .flatMap(User::getPrivateChannel)
-                    .flatMap(channel -> createMessage(channel, message.get(1).trim(), event.getMessage().getAttachments()).then(event.getMessage().addReaction(ReactionEmoji.unicode("✅"))));
-        } else if (event.getGuildId().isPresent() && !event.getMessage().getData().referencedMessage().isAbsent()) {
-            MessageData messageData = event.getMessage().getData().referencedMessage().get().get();
-            List<String> message = Arrays.stream(messageData.content().split(">")).toList();
-            return client.getUserById(Snowflake.of(message.get(0).replace("<@", "")))
-                    .flatMap(User::getPrivateChannel)
-                    .flatMap(channel -> createMessage(channel, event.getMessage().getContent().trim(), event.getMessage().getAttachments()).then(event.getMessage().addReaction(ReactionEmoji.unicode("✅"))));
         }
-        return Mono.empty();
+        return event.getMessage().getChannel().flatMap(messageChannel -> {
+            if (!messageChannel.getId().equals(Snowflake.of(1164901922143215676L))) {
+                return Mono.empty();
+            }
+            if (event.getGuildId().isPresent() && event.getMessage().getContent().startsWith("<@")) {
+                List<String> message = Arrays.stream(event.getMessage().getContent().split("^(<@)+([0-9])+(>)")).toList();
+                return client.getUserById(event.getMessage().getMemberMentions().get(0).getId())
+                        .flatMap(User::getPrivateChannel)
+                        .flatMap(channel -> createMessage(channel, message.get(1).trim(), event.getMessage().getAttachments()).then(event.getMessage().addReaction(ReactionEmoji.unicode("✅"))));
+            } else if (event.getGuildId().isPresent() && !event.getMessage().getData().referencedMessage().isAbsent()) {
+                MessageData messageData = event.getMessage().getData().referencedMessage().get().get();
+                List<String> message = Arrays.stream(messageData.content().split(">")).toList();
+                return client.getUserById(Snowflake.of(message.get(0).replace("<@", "")))
+                        .flatMap(User::getPrivateChannel)
+                        .flatMap(channel -> createMessage(channel, event.getMessage().getContent().trim(), event.getMessage().getAttachments()).then(event.getMessage().addReaction(ReactionEmoji.unicode("✅"))));
+            }
+            return Mono.empty();
+        });
     }
 
     private MessageCreateMono createMessage(MessageChannel channel, String message, List<Attachment> attachments) {
