@@ -9,7 +9,7 @@ import discord4j.core.object.reaction.ReactionEmoji;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
-@Component("privateChannel")
+@Component("privateMessage")
 public class PrivateMessageHandler extends AbstractMessageHandler {
 
     public PrivateMessageHandler(GatewayDiscordClient client) {
